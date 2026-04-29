@@ -1,0 +1,47 @@
+# Model identity table (post-run reveal)
+
+arena.ai's "Option A" / "Option B" labels do not refer to a stable model — the harness rotates models between runs. Identities for the 2026-04-25 garden-table observations were revealed by Alex after each run completed:
+
+| Prompt | Run | Option A | Option B |
+|--------|-----|----------|----------|
+| v1 | 1 | `gemini-3.1-pro-preview` | `gpt-5.5` |
+| v2 | 1 | `gemini-3-flash` (thinking-minimal) | `gpt-5.4-high` |
+| v3 | 1 | `qwen3.5-397b-a17b` (397B MoE, 17B active) | `gpt-5.5` |
+| v3 | 2 | `claude-sonnet-4-6` | `gpt-5.5` |
+| v3 | 3 | `claude-opus-4-6-thinking` | `gpt-5.5` |
+
+## Implications for cross-run interpretation
+
+Most of the obvious comparisons in our score table (e.g. "v2 B scored lower than v1 B — did v2 break something?") are confounded by the model swap. The clean comparisons are:
+
+- **Same model across prompts**: `gpt-5.5` is the only model run more than once. Four total runs: v1 B (9/15, procedural scene mockup), v3 B run 1 (14/15), v3 B run 2 (14/15), v3 B run 3 (14/15). The v1→v3 jump from 9 to 14 is the strongest cross-prompt evidence we have that the prompt-engineering loop is doing real work; the three v3 reproductions of 14/15 are the strongest within-prompt evidence that v3 produces *reproducible* behavior on a fixed model rather than a one-off lucky output.
+- **Same prompt across models**: v3 A has now been tested on three distinct models (`qwen3.5-397b-a17b`, `claude-sonnet-4-6`, `claude-opus-4-6-thinking`) producing 3/15, 10/15, 7/15. The 11-point A-side spread isn't telling us the prompt is "uneven" — it's telling us these three models respond very differently to the same instructions, each with its own characteristic failure mode.
+- **Within the Claude family**: `claude-opus-4-6-thinking` (7/15) scored *lower* than `claude-sonnet-4-6` (10/15) on the same v3 A slot. That is N=1 each — Opus's pipeline was more ambitious (real plane-sweep MVS, correctly-implemented visibility probe) and shipped a single coord-sign bug; Sonnet's was less ambitious (KNN normals, sparse output) but rendered something. The score gap reflects bug-class luck, not a systemic model-tier comparison. Don't generalize from one run apiece.
+
+What we DO NOT have:
+
+- Any longitudinal data on Gemini variants (different sub-models in v1 A vs v2 A; no v3 Gemini).
+- Any longitudinal data on Qwen (only one run, in v3 A).
+- Any v2 data on `gpt-5.5`. The v2 B run was `gpt-5.4-high`, not `gpt-5.5`. So the v1→v2→v3 score arc for "gpt" mixes two different gpt builds.
+
+## Per-model failure-mode summary (one observation each, except gpt-5.5)
+
+- **`gemini-3.1-pro-preview`** (v1 A, 9/15): real ML attempt (Depth-Anything via Transformers.js + gsplat-js); silent crash after depth estimation completed; only used 1 of 4 attached images.
+- **`gemini-3-flash` thinking-minimal** (v2 A, 3/15): emitted **literal Markdown link syntax inside TypeScript** (`[e.target](http://e.target).files`), failing at parse time; underlying logic was random-depth + random-rotation. Failure consistent with low thinking-budget output.
+- **`qwen3.5-397b-a17b`** (v3 A, 3/15): wrote the **most honestly-described** pipeline of any run (every panel bullet maps to a real function — feature detection, brute-force matching, two-view triangulation), but ran it synchronously on the main thread with O(N²) loops and no input downsampling. Browser locked up.
+- **`gpt-5.4-high`** (v2 B, 8/15): real anisotropic-Gaussian shader with EWA-style screen-space covariance projection + sparse multi-view photo-consistency search. Completed reconstruction (3,141 splats) but viewer rendered fully black with no surfaced error — exactly the silent-success failure mode v3's loud-error contract was added to catch.
+- **`gpt-5.5`** (v1 B → v3 B run 1 → v3 B run 2 → v3 B run 3, 9/15 → 14/15 → 14/15 → 14/15): adapted across prompt versions and reproduced across runs. Under v1 it shipped a procedural scene generator whose contents mirrored the photos (a polished form of fakery the v1 prompt didn't forbid). Under v3 (three times) it dropped the Three.js import entirely, rolled a custom WebGL2 anisotropic renderer, derived all three pixel-use flags genuinely, implemented every loud-error mitigation, and added a voluntary self-consistency probe ("Drawn this frame from renderer state: N") that cross-checks the panel's claimed Gaussian count against the renderer's actual instance buffer. Run-to-run variation under v3 lived in engineering refinements (adaptive stride, depth blur, slope-aware anisotropy, hex lattice, voluntary "No baked scene, no hidden assets" empty-state copy, run 3's explicit "Renderer checks" sentence in the panel naming the contract elements) — not in approach choices. Three identical 14/15 scores under v3 establish that the **remaining 1-point gap is structural** (axis 3 caps at 2 because heuristic depth + assumed-arc cameras can't produce a recognizable scene from novel angles), not a per-run miss. **The single longitudinal series we have across both prompts and runs, and the strongest evidence the prompt-iteration loop is delivering real improvement.**
+- **`claude-sonnet-4-6`** (v3 A run 2, 10/15): most ambitious geometry pipeline of any A run at the time of submission — real Harris interest-point detection + cross-view NCC patch matching + two-view triangulation + KNN surface normal estimation, split cleanly across three source files. Most precise probe scene description we've seen ("weathered-teak", "ceramic vase", "dried palm fronds"). Two execution-level bugs prevented a higher score: (1) the first-frame visibility probe wired the contract but reads from a fixed 10×5 corner block instead of the 50 random pixels it had collected — false-positive "renderer produced no visible primitives" warning fires while the renderer is actually working; (2) the panel's "Dense pixel unprojection via gradient-depth heuristic" pipeline step exists as code somewhere but never feeds the splat array, so output is 792 splats (sparse) rather than the dense reconstruction the panel implies. Honest engineering with implementation polish slipping at the contract-and-output-coupling level.
+- **`claude-opus-4-6-thinking`** (v3 A run 3, 7/15): most fully-elaborated honest Approach C in the corpus — real Harris + 8x8 patch L2 matching with Lowe ratio + mutual consistency + plane-sweep MVS with 7x7 NCC across all other views + depth-gradient surface normals + custom GLSL anisotropic renderer with proper covariance projection via Jacobian + 2D eigendecomposition. Three-file split layered on top of Three.js as a WebGL host. All three loud-error contracts wired *and correctly implemented* (improvement over Sonnet's buggy visibility probe). Single critical execution-level bug breaks the entire pipeline: `projectPoint` and `unprojectPixel` use opposite Z-conventions, so every triangulation lands behind the cameras and every plane-sweep NCC sample is rejected. Final output is zero Gaussians, surfaced via the cleanest stage-attributed error UI we've observed. The honest-caveats panel pre-warned the wrong meta-cause (assumed-pose mismatch with reality); the actual bug is internal coordinate-convention inconsistency that would have produced zero output even with perfectly-correct camera poses. **First run where v3's loud-error contract was both fully wired AND legitimately exercised against a real reconstruction failure** — strong evidence the contract delivers what it was designed to deliver.
+
+## What this changes for v4 design
+
+The failure-mode patterns v4 should target now span:
+
+- **Main-thread freeze on heavy synchronous compute** (qwen3.5-397b-a17b) — addressed by cooperative-scheduling and input-downsample clauses.
+- **Markdown link syntax inside TypeScript** (gemini-3-flash thinking-minimal) — already addressed by v3's anti-Markdown clause, but it's a defensive line against a narrow regime.
+- **Probe contract wired but algorithm-implementation buggy** (claude-sonnet-4-6) — the first-frame visibility probe is a great example: the model knew it had to do this and even named it in the panel, but the implementation reads from the wrong buffer. Suggests v4 should provide a literal algorithm sketch for the probe, not just a behavioral spec.
+- **Pipeline step described in panel but disconnected from output** (claude-sonnet-4-6) — different from "named but absent" (which v3 already catches). v4 should add: *"each pipeline step described in the panel must contribute to the splat array that is rendered."*
+- **Internal coordinate-convention inconsistency producing silent zero-output** (claude-opus-4-6-thinking) — sign mismatch between two adjacent functions (`projectPoint` checks for `cz > 0`, `unprojectPixel` plus the world-to-camera rotation produces points behind the camera). Probe, panel, and code structure are all honest; one math bug between two correctly-named functions breaks everything. v4 *could* require a small camera-projection self-test step before the heavy work begins, but a single occurrence isn't yet a clear v4 trigger — it might just be a one-off bug that future runs don't reproduce. Watch for recurrence before adding a clause.
+
+If the benchmark's scoring distribution is anchored by gpt-5.5-class results (which already adapt cleanly to tighter prompts), v4's prescriptive clauses help the *harder cases* (Qwen, Gemini variants, and Claude-class models that get the spirit but botch a load-bearing algorithm or coordinate convention) without hurting the cases that already work.
