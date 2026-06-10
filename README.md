@@ -15,7 +15,7 @@ The model receives only the prompt text plus attached images. It cannot see this
 
 ## Results so far
 
-5 A/B rounds across 3 prompt versions, each scored 0–3 on 5 rubric axes (max 15). Image set is the same 4-photo garden-table set for every entry except v1 B (mipnerf360-garden). Model identities are revealed *post-run* — arena.ai's Option A / Option B labels rotate per round.
+6 A/B rounds across 3 prompt versions, each scored 0–3 on 5 rubric axes (max 15). Image set is the same 4-photo garden-table set for every entry except v1 B (mipnerf360-garden). Model identities are revealed *post-run* — arena.ai's Option A / Option B labels rotate per round.
 
 | Date       | Prompt | Run | Option A                              | Score | Option B         | Score |
 |------------|--------|-----|---------------------------------------|-------|------------------|-------|
@@ -24,12 +24,14 @@ The model receives only the prompt text plus attached images. It cannot see this
 | 2026-04-25 | v3     | 1   | `qwen3.5-397b-a17b`                   |  3/15 | `gpt-5.5`        | 14/15 |
 | 2026-04-25 | v3     | 2   | `claude-sonnet-4-6`                   | 10/15 | `gpt-5.5`        | 14/15 |
 | 2026-04-26 | v3     | 3   | `claude-opus-4-6-thinking`            |  7/15 | `gpt-5.5`        | 14/15 |
+| 2026-06-09 | v3     | 4   | `claude-opus-4-6-thinking`            | 10/15 | `gpt-5.4-high`   | 12/15 |
 
 Headlines:
 
 - **`gpt-5.5` has reproduced 14/15 three times on v3 B** (same model, same prompt, same image set). The 1-point gap to 15 is structural — axis 3 (reconstruction faithfulness) caps at 2 on the heuristic-depth + assumed-arc-cameras Approach C path.
 - **`gpt-5.5` went from 9/15 (v1 B) to 14/15 (v3 B)** — the strongest cross-prompt signal that the prompt-iteration loop is doing real work. Caveat: v1 B used a different image set than the v3 B runs.
 - **A-side spread is wide and model-dependent.** Each v3 A run brought a distinct failure mode: qwen main-thread freeze, sonnet sparse output + buggy visibility probe, opus coord-convention sign bug producing zero output.
+- **Run 4 (2026-06-09), scored blind before the post-hoc reveal.** `claude-opus-4-6-thinking` (A, 10/15) repeated its run-3 signature — ambitious plane-sweep MVS + one fatal execution bug that zeroes the visible output, this time in the renderer rather than the geometry (7→10 as the bug moved downstream), caught cleanly by the visibility probe. `gpt-5.4-high` (B, 12/15) — the model whose v2 silent black-canvas motivated v3's loud-error contract — now renders a coarse cloud and wires every loud-error check. A mid-session fingerprint guess of `gpt-5.5` for B was wrong (it was `gpt-5.4-high`); scores were locked blind and never anchored to the guess.
 
 Per-run notes are in [`observations/`](observations/); model-identity reveals and longitudinal interpretation are in [`observations/MODEL_IDENTITY.md`](observations/MODEL_IDENTITY.md).
 
