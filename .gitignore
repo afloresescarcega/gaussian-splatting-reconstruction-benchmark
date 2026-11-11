@@ -1,2 +1,6 @@
 .DS_Store
 .claude/
+# research-licensed imagery (Mip-NeRF 360); MANIFEST.md only
+inputs/set-C-mipnerf360-garden-dense/images/
+inputs/set-C-mipnerf360-garden-dense/heldout/
+archive/

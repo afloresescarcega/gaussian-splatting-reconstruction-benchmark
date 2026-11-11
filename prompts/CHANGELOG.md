@@ -1,5 +1,19 @@
 # Prompt changelog
 
+## v5 — planned (see prompts/V5_PLAN.md)
+
+## v4 — 2026-11-11 — agentic local track (T3 Code threads)
+
+New channel: autonomous coding agents in isolated local workspaces instead of arena.ai's single-shot Code tab. Scores are a separate track.
+
+- **No benchmark framing.** Rewritten as a plain client brief: no "benchmark", "rubric", "parsed", or "a previous run" wording, so contestants can't tell they're being evaluated. `BENCHMARK_PROBE` → `IMPLEMENTATION_DISCLOSURE`; `images_visible_at_build_time` → `example_photos_viewed_during_development`.
+- **Workspace contract.** Photos sit in `./photos` for testing; the app must not bundle or fetch them, and "stay inside this folder" is stated (out-of-workspace reads = DQ in the rubric's Gate 0).
+- **Static `dist/` deliverable** via `npm install && npm run build`, plus `NOTES.md`.
+- **`.ply` export required** (answers the v2/v3 open question) so judges can inspect raw Gaussians.
+- **New disclosure field `camera_poses: estimated | assumed`** — v3 runs hid assumed arcs behind "orientation from capturing camera".
+- **Shuffled-upload-order test** added to the rubric to catch order-dependent hardcoding.
+- Kept: primer, approaches A/B/C, loud-error contract, what-does-not-count list, library hints, anti-Markdown clause.
+
 ## v3 — 2026-04-25 — informed by v2 A/B observations on the same image set
 
 Triggered by the 2026-04-25 v2 garden-table run with Models A and B. v2 succeeded at extracting honest probe blocks and ending the hardcoded-scene-mockup pattern; it failed to prevent two new failure modes that v3 explicitly closes.

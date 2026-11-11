@@ -35,6 +35,29 @@ Headlines:
 
 Per-run notes are in [`observations/`](observations/); model-identity reveals and longitudinal interpretation are in [`observations/MODEL_IDENTITY.md`](observations/MODEL_IDENTITY.md).
 
+### v4 agentic track (local T3 Code threads)
+
+A separate track, **not comparable with the arena.ai rows above**. Each model ran as an autonomous coding agent in its own isolated local workspace, given only the example photos and could install packages, build and test before handing in. Prompt `prompts/v4.md` is a plain client brief (no benchmark wording). Rubric `rubric/v4.md` adds an isolation gate and a shuffled-upload-order test. All models at medium reasoning effort, single prompt, no follow-ups; same 4 garden-table photos. Judged non-blind for this run.
+
+| Date       | Run | Model                         | Wall time | Run | 3DGS | Faithful | UX | Honesty | Score |
+|------------|-----|-------------------------------|-----------|-----|------|----------|----|---------|-------|
+| 2026-11-11 | 1   | `claude-sonnet-5-5`           | 16.8 min  | 3   | 3    | 2        | 3  | 3       | 14/15 |
+| 2026-11-11 | 1   | `grok-4.7-build-fast`         | 38.3 min  | 3   | 3    | 1        | 3  | 3       | 13/15 |
+| 2026-11-11 | 1   | `gemini-3.8-flash`            | 13.1 min  | 3   | 3    | 1        | 2  | 2       | 11/15 |
+| 2026-11-11 | 1   | `gpt-6.1-terra`               | 1.4 min   | 3   | 2    | 1        | 2  | 3       | 11/15 |
+| 2026-11-11 | 1   | `gpt-5.6-luna`                | 3.6 min   | 1   | 1    | 0        | 1  | 2       |  5/15 |
+| 2026-11-11 | 1   | `gpt-6-luna`                  | 1.1 min   | 1   | 1    | 0        | 1  | 1       |  4/15 |
+| 2026-11-11 | 1   | `muse-ember-1.0`, `muse-spark-1.3` | —    | —   | —    | —        | —  | —       | did not start (provider error) |
+
+Headlines:
+
+- **No disqualifications.** All six transcripts passed the isolation audit. Antigravity's shell started in the wrong directory (filenames listed, nothing opened), which is flagged as a harness gap.
+- **The 4-photo set is the bottleneck.** Its photos sit at 138°/175°/300°/333° around the table (from the dataset's COLMAP poses), so no pose estimator could bridge the 125° gap. Sonnet, Grok and Gemini each registered ≤2/4 views or fell back to an assumed arc. Nobody scored 3 on faithfulness. A dense 7-view set with held-out views is now in `inputs/set-C-mipnerf360-garden-dense/`.
+- **Nobody attempted photometric optimization (approach A).** The top two hand-wrote full SfM pipelines (features → essential matrix → triangulation → EWA renderer); Sonnet aligned learned monodepth to triangulated points.
+- **Diligence varied 35× at the same effort setting** (64 s to 38 min). Both bottom entries never ran their pipeline on the provided photos.
+
+Full notes: [`observations/2026-11-11_v4-agentic/RESULTS.md`](observations/2026-11-11_v4-agentic/RESULTS.md). Next version: [`prompts/V5_PLAN.md`](prompts/V5_PLAN.md).
+
 ## How arena.ai's "Code" channel works (relevant constraints)
 
 - **Input**: a single prompt text field plus images attached via the clip icon. **No other file uploads.**
@@ -63,8 +86,9 @@ This makes the benchmark genuinely hard — true 3DGS optimization from a few im
 ## Repository layout
 
 ```
-prompts/      v1.md, v2.md, ...       # the artifact pasted into arena.ai
+prompts/      v1.md, v2.md, ...       # the artifact pasted into arena.ai (v4+: agentic brief)
   CHANGELOG.md
+  V5_PLAN.md                          # fixes + ideas queued for v5
 rubric/       v1.md, v2.md, ...       # human-judge scoring rubric
 inputs/
   set-A-mipnerf360-bonsai/            # canonical 3DGS scene; not redistributed
@@ -72,6 +96,12 @@ inputs/
   set-B-polyhaven-object/             # CC0 / your-own photos; redistributable
     MANIFEST.md
     images/
+  set-C-mipnerf360-garden-dense/      # 7-view garden arc + 6 held-out views; not redistributed
+    MANIFEST.md
 observations/                         # one note per evaluated run
   README.md                           # template
+  2026-11-11_v4-agentic/              # v4 agentic run 1 results
+tools/
+  judge-harness.mjs                   # headless-Chrome upload/orbit/export runner
+  remote_zip.py, angles.py            # fetch dataset frames by HTTP range; orbit angle per frame
 ```
