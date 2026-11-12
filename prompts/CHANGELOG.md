@@ -1,6 +1,18 @@
 # Prompt changelog
 
-## v5 — planned (see prompts/V5_PLAN.md)
+## v5 — 2026-11-11 — dense photos, runtime honesty, refinement expected
+
+Implements the contestant-facing parts of `prompts/V5_PLAN.md`. Rubric: `rubric/v5.md`.
+
+- **Set C photos (7 views, ~30° spacing)** replace the 4 wide-baseline photos. Upload limit 3–6 → **3–8**. Files renamed to random `img_xxxx.jpg` (name order ≠ arc order), EXIF/APP1+ segments stripped without re-encoding. The prompt says names and order carry no meaning.
+- **Absolute project path in the prompt** ("if your shell starts elsewhere, `cd` there"). This fixes Antigravity, which starts its shell in `~/.t3/userdata/attachments`.
+- **Live runtime values** in the panel: Gaussian count, `camera_poses` for this run, `views_registered` (N / M + dropped), and **input-view PSNR** (before/after refinement + loss readout).
+- **New `cameras.json` export** (intrinsics + camera-to-world per image, axis convention stated) so judges can Sim(3)-align and score held-out views.
+- **Disclosure block:** `camera_poses` → `camera_poses_design` (static intent); new `photometric_refinement`; `approach_family` allows hybrids.
+- **Approaches reworded:** a hybrid (init + photometric refinement) is "the expected shape"; initialization-only is acceptable but not the goal. Dropped "a working, honest C beats a broken A" as the headline. B now says to check that a browser-loadable export exists.
+- **Time budget + verification:** "up to 60 minutes" and "run the full flow on `photos/` in a browser before finishing".
+- **Network rule:** show download progress, retry once, then fail loudly.
+- Kept: primer, what-does-not-count list (plus "literal runtime numbers"), library hints, loud-error contract, anti-Markdown clause, honesty section.
 
 ## v4 — 2026-11-11 — agentic local track (T3 Code threads)
 
